@@ -1,74 +1,270 @@
-# Q-Chat — Full-stack QKD messaging demo
+# ⚛️ QubiFide — Quantum-Safe Communication Simulation
 
-A local educational prototype with a React/Vite frontend, FastAPI backend, a Qiskit Aer BB84 simulation, QBER estimation, an optional simulated Eve intercept-resend attack, and AES-GCM-encrypted message storage.
+### A BB84-Based Framework for Secure Communication & Eavesdropping Analysis
 
-## What was fixed in this package
+<p align="center">
+  <strong>Simulating Quantum Key Distribution • Detecting Eavesdropping • Securing Messages</strong>
+</p>
 
-- The backend now accepts local Vite origins on ports such as `5173` **and** `5174` (Vite chooses another port when its default is occupied).
-- The 433-qubit BB84 simulation batches Qiskit circuits rather than starting a new Aer simulator for every qubit.
-- Key derivation's demo minimum is consistent with the BB84 candidate length produced after sifting and test-bit removal. Previously BB84 could accept a candidate and the crypto function could then reject it, causing key exchange to return HTTP 500.
-- Both browser windows poll the exchange status and message history, so the second participant also unlocks chat when the key has been accepted and can see messages from the other side.
-- Added the TypeScript configuration and React type declarations needed to build the frontend.
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" />
+  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" />
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" />
+  <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" />
+  <img src="https://img.shields.io/badge/Qiskit-6929C4?style=for-the-badge&logo=ibm&logoColor=white" />
+</p>
 
-## Important security limitations
+---
 
-This is an educational prototype, not production QKD or a complete secure messaging system. Qiskit simulates measurements locally; there is no physical quantum channel. The backend manages the session key, so this is **not end-to-end encryption against the backend**. The key derivation is a simplified educational construction without a finite-key security proof. Do not use it for sensitive real-world communications.
+## 🌌 Overview
 
-## Requirements
+**QubiFide** is an interactive web-based application that demonstrates how Quantum Key Distribution (QKD) can be integrated with classical cryptographic techniques to establish secure communication.
 
-- Python 3.12 recommended for the provided Windows steps (Python 3.11+ generally works with the requirements).
-- Node.js LTS and npm.
-- Internet access for the initial Python/npm dependency installation.
+Built around the **BB84 Quantum Key Distribution Protocol**, QubiFide simulates quantum state preparation, measurement, basis reconciliation, and key sifting between two communicating participants.
 
-## Start the backend (Windows PowerShell)
+It also introduces an optional **Intercept-Resend Attack**, allowing users to observe how an eavesdropper can disturb quantum states and increase the Quantum Bit Error Rate (QBER).
 
-Open a VS Code terminal:
+Once a key exchange satisfies the configured acceptance conditions, the application uses **HKDF** for application key derivation and **AES-GCM** for authenticated message encryption.
 
-```powershell
-cd backend
-py -3.12 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-uvicorn app.main:app --reload
+The goal is to make quantum cryptography concepts interactive, understandable, and experimentally observable.
+
+## ✨ Key Features
+
+- **Quantum Key Distribution (BB84):** Simulates quantum state preparation and measurement using computational and diagonal bases.
+- **Eavesdropping Simulation:** Implements an optional Intercept-Resend Attack to demonstrate quantum measurement disturbance.
+- **QBER Analysis:** Calculates the Quantum Bit Error Rate to evaluate mismatches in sampled sifted bits.
+- **Exchange Verification:** Accepts or rejects key exchanges according to configured QBER thresholds and key-material requirements.
+- **Cryptographic Key Derivation:** Uses HKDF to derive application encryption keys from the accepted key material.
+- **Authenticated Encryption:** Uses AES-GCM to encrypt and authenticate exchanged messages.
+- **Session Management:** Allows two participants to create and join communication sessions.
+- **Secure Messaging Workflow:** Enables messaging only after the key exchange has been accepted.
+- **Interactive Interface:** Provides an interface to observe exchange status, QBER results, and encrypted communication.
+
+## 🔬 How It Works
+
+QubiFide follows a sequence of operations combining quantum simulation and classical cryptography.
+
+```mermaid
+flowchart TD
+    A([Start Session]) --> B[Two Participants Connect]
+    B --> C[Generate Random Bits and Bases]
+    C --> D[Prepare Quantum States]
+    D --> E{Eavesdropping Enabled?}
+    E -->|Yes| F[Intercept-Resend Attack]
+    E -->|No| G[Receiver Measures States]
+    F --> G
+    G --> H[Basis Reconciliation]
+    H --> I[Key Sifting]
+    I --> J[Calculate QBER]
+    J --> K{Exchange Accepted?}
+    K -->|No| L[Reject Exchange]
+    K -->|Yes| M[Derive Keys Using HKDF]
+    M --> N[Encrypt Messages Using AES-GCM]
+    N --> O[Authenticate and Decrypt]
+    O --> P([Secure Messaging Session])
 ```
 
-If `.venv` already exists, do not recreate it; activate it and start from the `pip install` step. If PowerShell blocks activation, run `Set-ExecutionPolicy -Scope Process Bypass` in that terminal, then activate it again.
+### 1. Quantum Key Distribution
 
-API health: http://127.0.0.1:8000/api/health  
-API docs: http://127.0.0.1:8000/docs
+- Generate random classical bits.
+- Randomly select preparation bases.
+- Encode bits into quantum states.
+- Measure the states using randomly selected receiver bases.
+- Compare the bases and retain only matching positions.
 
-## Start the frontend
+### 2. Eavesdropping Analysis
 
-Open a **second terminal** and leave the backend terminal running:
+An optional attacker, Eve, intercepts the quantum states, measures them using randomly selected bases, and prepares replacement states.
 
-```powershell
+When Eve chooses an incompatible basis, measurement disturbance can introduce errors into the receiver's results.
+
+This allows the application to compare normal and intercepted exchanges.
+
+### 3. QBER Calculation
+
+The Quantum Bit Error Rate measures the proportion of mismatched bits in the sampled key.
+
+\[
+QBER = \frac{\text{Number of Errors}}{\text{Total Bits Compared}} \times 100
+\]
+
+A higher QBER indicates more mismatches in the sample.
+
+For an ideal BB84 scenario with a full intercept-resend attack and randomly selected bases, the expected QBER is approximately **25%**.
+
+### 4. Key Derivation and Encryption
+
+After an exchange is accepted:
+
+- HKDF derives application encryption keys.
+- AES-GCM encrypts plaintext messages.
+- An authentication tag is generated alongside the ciphertext.
+- The receiver verifies the authentication tag before decrypting the message.
+
+## 🏗️ System Architecture
+
+QubiFide follows a client-server architecture with separate frontend, backend, quantum simulation, and cryptographic components.
+
+| Component | Technology | Responsibility |
+|---|---|---|
+| Frontend | React, TypeScript, Vite | User interface and session interaction |
+| Backend | Python, FastAPI | API handling and session coordination |
+| Quantum Simulation | Qiskit | Quantum circuit construction |
+| Simulation Backend | Qiskit Aer | Quantum circuit execution |
+| Key Derivation | HKDF | Application key generation |
+| Encryption | AES-GCM | Message confidentiality and authentication |
+
+### Architecture Overview
+
+```mermaid
+flowchart TB
+    A[Participant A] --> B[React + TypeScript Frontend]
+    C[Participant B] --> B
+    B <--> D[FastAPI Backend]
+    D <--> E[BB84 Simulation Engine]
+    E --> F[Qiskit + Qiskit Aer]
+    D --> G[QBER Analysis]
+    G --> H[Exchange Verification]
+    H --> I[HKDF Key Derivation]
+    I --> J[AES-GCM Encryption]
+    J --> K[Authenticated Message Exchange]
+```
+
+## 🛠️ Technology Stack
+
+**Frontend**
+- React
+- TypeScript
+- Vite
+
+**Backend**
+- Python
+- FastAPI
+
+**Quantum Computing**
+- Qiskit
+- Qiskit Aer
+
+**Cryptography**
+- HKDF
+- AES-GCM
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+Make sure you have the following installed:
+
+- Python
+- Node.js and npm
+- Git
+
+### Clone the Repository
+
+```bash
+git clone <YOUR_REPOSITORY_URL>
+cd QubiFide
+```
+
+### Backend Setup
+
+Navigate to the backend directory:
+
+```bash
+cd backend
+```
+
+Create and activate a virtual environment:
+
+```bash
+python -m venv venv
+```
+
+Install the dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Start the FastAPI server using the backend application's entry point:
+
+```bash
+uvicorn main:app --reload
+```
+
+### Frontend Setup
+
+Navigate to the frontend directory:
+
+```bash
 cd frontend
+```
+
+Install dependencies:
+
+```bash
 npm install
+```
+
+Start the development server:
+
+```bash
 npm run dev
 ```
 
-Open the exact local URL printed by Vite. It may be `http://localhost:5173/` or `http://localhost:5174/`.
+*Note: Adjust the directory names and FastAPI entry point according to your repository structure. Configure the frontend API endpoint to point to your running backend.*
 
-## Use key exchange and chat (two participants required)
+## 🧪 Experimental Scenarios
 
-1. In browser window A, click **Create Temporary Session**.
-2. Copy the session ID displayed in the right security panel.
-3. Open the printed frontend URL in a **second browser window or an incognito window**. Click **Join Existing Session**, enter the ID, and click **Join**.
-4. Wait until the first window shows the other participant as connected.
-5. In either window, click **Start Secure Key Exchange**. Qiskit Aer will simulate the BB84 preparation, basis measurement, sifting, and QBER check.
-6. Wait for **Key accepted**. Both windows should unlock chat after they refresh the shared exchange result.
-7. Send a message from either window. The other window should show it within about two seconds.
-8. Click **Simulate Eve Attack** for a separate intercept-resend demonstration. The measured QBER fluctuates; a run with Eve may be rejected when it exceeds the configured threshold.
+QubiFide can be used to explore different experimental conditions:
 
-Key exchange is intentionally disabled until two participants have joined. Creating a session in only one window is not enough.
+| Scenario | Expected Behaviour |
+|---|---|
+| Normal key exchange | Zero or low QBER in an ideal noiseless simulation |
+| Eavesdropping enabled | Increased probability of bit mismatches |
+| QBER below threshold | Exchange may be accepted |
+| QBER above threshold | Exchange is rejected |
+| Insufficient key material | Messaging remains disabled |
+| Valid encrypted message | Successful authentication and decryption |
+| Modified ciphertext or tag | Authentication failure |
 
-## Run backend tests
+## 🔮 Future Scope
 
-From `backend/` with the virtual environment activated:
+Potential improvements include:
 
-```powershell
-pytest -q
-```
+- Integration with real quantum computing hardware.
+- Implementation of additional eavesdropping attack models.
+- Privacy amplification and error correction.
+- Stronger authentication and identity management.
+- Improved key lifecycle and secure key storage.
+- More extensive security testing and analysis.
 
-The BB84 tests run actual Qiskit circuits and may take longer than the encryption tests.
+## ⚠️ Security Disclaimer
+
+QubiFide is an **educational and experimental prototype**, not a production-ready quantum security system.
+
+- Quantum operations are simulated using Qiskit and Qiskit Aer.
+- No physical quantum communication channel is used.
+- The implementation does not provide a formal security proof.
+- Full QKD post-processing, including privacy amplification and error correction, is not implemented.
+- The backend has access to effective session key material; therefore, end-to-end security against a malicious or compromised backend cannot be claimed.
+
+Do not use this prototype to exchange real sensitive information.
+
+## 👨‍💻 Contributors
+
+**Akshat Kumar**  
+**Jaswant Swaram**
+
+Department of Computer Science and Engineering  
+Indian Institute of Information Technology, Bhopal
+
+**Project Supervisor:** Dr. Supriyo Mandal
+
+---
+
+<p align="center">
+  <strong>QubiFide — Exploring the Intersection of Quantum Computing and Cryptography.</strong>
+  <br/>
+  Built with curiosity, mathematics, and code. ⚛️
+</p>
