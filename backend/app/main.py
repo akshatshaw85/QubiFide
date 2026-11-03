@@ -44,7 +44,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="QubiFide API",
     version="0.2.0",
-    description="Educational BB84/Qiskit quantum-secure messaging demo",
+    description="Qiskit quantum-secure messaging demo",
     lifespan=lifespan,
 )
 
